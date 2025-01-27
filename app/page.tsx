@@ -4,12 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Monitor, Video, Scan, Users, ArrowRight, Brain } from "lucide-react";
 import Link from "next/link";
+import NavBar from "@/components/layout/nav-bar"
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-white">
+      <NavBar/>
       {/* Fixed Navigation Bar */}
-      <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md z-50 border-b">
+      {/* <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md z-50 border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
@@ -26,7 +28,7 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </nav>
+      </nav> */}
 
       {/* Hero Section */}
       <section className="pt-24 pb-12 bg-gradient-to-br from-indigo-50 to-white">

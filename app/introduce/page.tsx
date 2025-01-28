@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { NavBar } from "@/components/layout/nav-bar";
 
 interface ModelCard {
   id: string;
@@ -110,25 +111,7 @@ export default function Introduce() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Navigation Bar */}
-      <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md z-50 border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Brain className="h-8 w-8 text-indigo-600" />
-              <span className="ml-2 text-xl font-bold">FourCV</span>
-            </div>
-            <div className="hidden md:flex items-center space-x-8">
-              <Link href="/" className="text-gray-700 hover:text-indigo-600">Home</Link>
-              <Link href="/introduce" className="text-gray-700 hover:text-indigo-600">Services</Link>
-              <Button asChild>
-                <Link href="/report">Contact Us</Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
+      <NavBar />
       {/* Hero Section */}
       <section className="pt-24 pb-12 bg-gradient-to-br from-purple-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12">

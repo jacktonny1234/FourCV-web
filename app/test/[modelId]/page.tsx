@@ -1,11 +1,12 @@
-"use client";
+'use client'
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Brain } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import API from "@/lib/api"
 
 const modelCards = {
   "yolov5-object-detection": {
@@ -26,7 +27,7 @@ const modelCards = {
     modelType: ["FaceNet", "Deep Learning"],
     category: "Facial Recognition"
   },
-  "maskrcnn-segmentation": {
+  "maskrcnn-classmentation": {
     title: "Mask R-CNN Segmentation",
     description: "Instance segmentation model for object detection and segmentation masks.",
     modelType: ["Mask R-CNN", "Instance Segmentation"],
@@ -43,15 +44,138 @@ const modelCards = {
     description: "End-to-End Object Detection with Transformers.",
     modelType: ["DETR", "Transformer"],
     category: "Object Detection"
-  }
+  },
+  "yolo11n": {
+    title: "YOLO11N Object Detection",
+    description: "",
+    modelType: ["YOLO11n"],
+    category: "Object Detection"
+  },
+  "yolo11s": {
+    title: "YOLO11S Object Detection",
+    description: "",
+    modelType: ["YOLO11ns"],
+    category: "Object Detection"
+  },
+  "yolo11m": {
+    title: "YOLO11m Object Detection",
+    description: "",
+    modelType: ["YOLO11m"],
+    category: "Object Detection"
+  },
+  "yolo11l": {
+    title: "YOLO11l Object Detection",
+    description: "",
+    modelType: ["YOLO11l"],
+    category: "Object Detection"
+  },
+  "yolo11x": {
+    title: "YOLO11x Object Detection",
+    description: "",
+    modelType: ["YOLO11x"],
+    category: "Object Detection"
+  },
+  "yolo11n-seg": {
+    title: "YOLO11N Object Segmentation",
+    description: "",
+    modelType: ["YOLO11n"],
+    category: "Object Segmentation"
+  },
+  "yolo11s-seg": {
+    title: "YOLO11S Object Segmentation",
+    description: "",
+    modelType: ["YOLO11ns"],
+    category: "Object Segmentation"
+  },
+  "yolo11m-seg": {
+    title: "YOLO11m Object Segmentation",
+    description: "",
+    modelType: ["YOLO11m"],
+    category: "Object Segmentation"
+  },
+  "yolo11l-seg": {
+    title: "YOLO11l Object Segmentation",
+    description: "",
+    modelType: ["YOLO11l"],
+    category: "Object Segmentation"
+  },
+  "yolo11x-seg": {
+    title: "YOLO11x Object Segmentation",
+    description: "",
+    modelType: ["YOLO11x"],
+    category: "Object Segmentation"
+  },
+  "yolo11n-class": {
+    title: "YOLO11N Object Classify",
+    description: "",
+    modelType: ["YOLO11n"],
+    category: "Object Classify"
+  },
+  "yolo11s-class": {
+    title: "YOLO11S Object Classify",
+    description: "",
+    modelType: ["YOLO11ns"],
+    category: "Object Classify"
+  },
+  "yolo11m-class": {
+    title: "YOLO11m Object Classify",
+    description: "",
+    modelType: ["YOLO11m"],
+    category: "Object Classify"
+  },
+  "yolo11l-class": {
+    title: "YOLO11l Object Classify",
+    description: "",
+    modelType: ["YOLO11l"],
+    category: "Object Classify"
+  },
+  "yolo11x-class": {
+    title: "YOLO11x Object Classify",
+    description: "",
+    modelType: ["YOLO11x"],
+    category: "Object Classify"
+  },
+  "yolo11n-obb": {
+    title: "OBB YOLO11N",
+    description: "",
+    modelType: ["YOLO11n-obb"],
+    category: "OBB Object Detection"
+  },
+  "yolo11s-obb": {
+    title: "OBB YYOLO11S",
+    description: "",
+    modelType: ["YOLO11s-obb"],
+    category: "OBB Object Detection"
+  },
+  "yolo11m-obb": {
+    title: "OBB YYOLO11m",
+    description: "",
+    modelType: ["YOLO11m-obb"],
+    category: "OBB Object Detection"
+  },
+  "yolo11l-obb": {
+    title: "OBB YYOLO11l",
+    description: "",
+    modelType: ["YOLO11l-obb"],
+    category: "OBB Object Detection"
+  },
+  "yolo11x-obb": {
+    title: "OBB YYOLO11x",
+    description: "",
+    modelType: ["YOLO11x-obb"],
+    category: "OBB Object Detection"
+  },
 };
 
-export default function TestModel({ params }: { params: { modelId: string } }) {
+export default function TestModel({ params: paramsPromise }: { params: Promise<{ modelId: string }> }) {
+
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<string | null>(null);
+  const params = React.use(paramsPromise);
+  const { modelId } = params;
 
-  const model = modelCards[params.modelId as keyof typeof modelCards];
+  const model = modelCards[modelId as keyof typeof modelCards];
 
   if (!model) {
     return (
@@ -77,6 +201,7 @@ export default function TestModel({ params }: { params: { modelId: string } }) {
     }
   };
 
+
   const handleProcess = async () => {
     if (!selectedImage) return;
 
@@ -85,7 +210,11 @@ export default function TestModel({ params }: { params: { modelId: string } }) {
 
     try {
       // Simulated API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // await new Promise(resolve => setTimeout(resolve, 2000));
+
+      console.log("bbbbbb")
+      await API.sendFile({data:selectedImage});
+      
       
       // Simulated results based on model type
       let simulatedResult = "";

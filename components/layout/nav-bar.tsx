@@ -19,9 +19,7 @@ export function NavBar() {
             <Link href="/introduce" className="text-gray-700 hover:text-indigo-600">
               Services
             </Link>
-            <Button asChild variant="outline">
-              <Link href="/report">Contact Us</Link>
-            </Button>
+            <Link href="/report" className="text-gray-700 hover:text-indigo-600">Contact Us</Link>
             <UserMenu />
           </div>
         </div>

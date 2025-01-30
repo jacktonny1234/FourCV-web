@@ -212,7 +212,7 @@ export default function TestModel({ params: paramsPromise }: { params: Promise<{
       // Simulated API call
       // await new Promise(resolve => setTimeout(resolve, 2000));
 
-      console.log("bbbbbb")
+      debugger;
       await API.sendFile({data:selectedImage});
       
       

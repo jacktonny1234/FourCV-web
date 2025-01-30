@@ -1,6 +1,5 @@
 // Import the axios library
 const axios = require('axios');
-const API_SERVER_URL = process.env.API_SERVER_URL!;
 const API = {
     // Make the POST request using the async/await syntax
     sendFile: async function (data :any) {
@@ -9,7 +8,8 @@ const API = {
         // Await the POST request and assign the response object to a variable
         const response = await axios.post("http://192.168.140.160:8888/api/v1/face/normal", data, {
         headers: {
-                'Content-Type': 'multipart/form-data'
+            "Origin": "*",
+            "Content-Type": "application/json"
             }
         });
     

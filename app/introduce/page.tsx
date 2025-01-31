@@ -1,111 +1,56 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { Brain, Search } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Search } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { NavBar } from "@/components/layout/nav-bar";
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
 interface ModelCard {
-  id: string;
+  id: number;
   title: string;
-  description: string;
+  desc: string;
   image: string;
-  modelType: string[];
+  tags: string[];
   category: string;
-  accuracy: string;
-  speed: string;
 }
 
-const modelCards: ModelCard[] = [
-  {
-    id: "yolov5-object-detection",
-    title: "YOLOv5 Object Detection",
-    description: "State-of-the-art object detection model with real-time performance and high accuracy. Perfect for real-world applications.",
-    image: "https://images.unsplash.com/photo-1527430253228-e93688616381?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-    modelType: ["YOLOv5", "Real-time"],
-    category: "Object Detection",
-    accuracy: "93.5%",
-    speed: "45 FPS"
-  },
-  {
-    id: "resnet50-classification",
-    title: "ResNet50 Image Classification",
-    description: "Deep residual learning framework for image classification with exceptional feature extraction capabilities.",
-    image: "https://images.unsplash.com/photo-1507146426996-ef05306b995a?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-    modelType: ["ResNet50", "CNN"],
-    category: "Image Recognition",
-    accuracy: "95.2%",
-    speed: "60 FPS"
-  },
-  {
-    id: "facenet-recognition",
-    title: "FaceNet Recognition System",
-    description: "Advanced facial recognition model using deep convolutional networks for accurate face detection and recognition.",
-    image: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-    modelType: ["FaceNet", "Deep Learning"],
-    category: "Facial Recognition",
-    accuracy: "99.1%",
-    speed: "30 FPS"
-  },
-  {
-    id: "maskrcnn-segmentation",
-    title: "Mask R-CNN Segmentation",
-    description: "Instance segmentation model that excels at detecting objects while simultaneously generating high-quality segmentation masks.",
-    image: "https://images.unsplash.com/photo-1576400883215-7083980b6193?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-    modelType: ["Mask R-CNN", "Instance Segmentation"],
-    category: "Object Detection",
-    accuracy: "91.8%",
-    speed: "15 FPS"
-  },
-  {
-    id: "efficientnet-classification",
-    title: "EfficientNet Classification",
-    description: "Scalable and efficient model that achieves both better accuracy and better efficiency than previous ConvNets.",
-    image: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-    modelType: ["EfficientNet", "Mobile"],
-    category: "Image Recognition",
-    accuracy: "97.1%",
-    speed: "75 FPS"
-  },
-  {
-    id: "detr-detection",
-    title: "DETR Object Detection",
-    description: "End-to-End Object Detection with Transformers, providing a new approach to object detection using transformer architecture.",
-    image: "https://images.unsplash.com/photo-1542281286-9e0a16bb7366?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-    modelType: ["DETR", "Transformer"],
-    category: "Object Detection",
-    accuracy: "94.7%",
-    speed: "25 FPS"
-  }
-];
-
 export default function Introduce() {
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [selectedModel, setSelectedModel] = useState<string>("");
-  const [result, setResult] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [modelCards, setModelCards] = useState<ModelCard[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [tagsFilter, setTagsFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const router = useRouter();
 
-  const filteredModels = modelCards.filter(model => {
-    const matchesSearch = 
-      model.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      model.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      model.modelType.some(type => type.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    const matchesCategory = categoryFilter === "all" || model.category.toLowerCase() === categoryFilter.toLowerCase();
-    
-    return matchesSearch && matchesCategory;
-  });
+  useEffect(() => {
+    const fetchModelCards = async () => {
+      try {
+      const response = await fetch(`/api/models?searchQuery=${searchQuery}&tagsFilter=${tagsFilter}&categoryFilter=${categoryFilter}&currentPage=${currentPage}`);
+      const data = await response.json();
 
-  const handleModelClick = (modelId: string) => {
+      if (response.ok) {
+        setModelCards(data.data);
+        setTotalPages(data.totalPages);
+      } else {
+        console.error(data.error);
+      }
+      } catch (error) {
+      console.error('Failed to fetch model cards:', error);
+      }
+    };
+
+    fetchModelCards();
+  }, [searchQuery, tagsFilter, categoryFilter, currentPage]);
+
+  const handleModelClick = (modelId: number) => {
     router.push(`/test/${modelId}`);
   };
 
@@ -146,6 +91,20 @@ export default function Introduce() {
                 />
               </div>
               <Select
+                value={tagsFilter}
+                onValueChange={setTagsFilter}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="All Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Type</SelectItem>
+                  <SelectItem value="YOLO">YOLO</SelectItem>
+                  <SelectItem value="Hugging Face">Hugging Face</SelectItem>
+                  <SelectItem value="Luxand">Luxand</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
                 value={categoryFilter}
                 onValueChange={setCategoryFilter}
               >
@@ -156,7 +115,7 @@ export default function Introduce() {
                   <SelectItem value="all">All Categories</SelectItem>
                   <SelectItem value="Image Recognition">Image Recognition</SelectItem>
                   <SelectItem value="Object Detection">Object Detection</SelectItem>
-                  <SelectItem value="Facial Recognition">Facial Recognition</SelectItem>
+                  <SelectItem value="Face Recognition">Face Recognition</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -164,7 +123,7 @@ export default function Introduce() {
 
           {/* Model Cards Grid */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredModels.map((model) => (
+            {modelCards.map((model) => (
               <div
                 key={model.id}
                 className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer"
@@ -182,19 +141,40 @@ export default function Introduce() {
                 </div>
                 <div className="p-6">
                   <h3 className="text-xl font-semibold mb-2">{model.title}</h3>
-                  <p className="text-gray-600 mb-4">{model.description}</p>
+                  <p className="text-gray-600 mb-4">{model.desc}</p>
                   <div className="flex flex-wrap gap-2 mb-4">
-                    {model.modelType.map((type, index) => (
+                    {model.tags.map((type, index) => (
                       <Badge key={index} variant="secondary">{type}</Badge>
                     ))}
-                  </div>
-                  <div className="flex justify-between items-center text-sm text-gray-500">
-                    <span>Accuracy: {model.accuracy}</span>
-                    <span>Speed: {model.speed}</span>
                   </div>
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Pagination */}
+          <div className="flex justify-center mt-8 space-x-2">
+            <Button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            {[...Array(totalPages)].map((_, index) => (
+              <Button
+                key={index}
+                onClick={() => setCurrentPage(index + 1)}
+                variant={currentPage === index + 1 ? "default" : "secondary"}
+              >
+                {index + 1}
+              </Button>
+            ))}
+            <Button
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
           </div>
         </div>
       </section>

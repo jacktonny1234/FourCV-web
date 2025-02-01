@@ -1,181 +1,45 @@
 'use client'
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Brain } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import API from "@/lib/api"
+import $ from "@/lib/axios"
+import { useEffect, useRef } from "react";
+import * as React from 'react'
+import { processImageWithLuxandFaceFeatures } from "@/lib/opencv-utils"
 
-const modelCards = {
-  "yolov5-object-detection": {
-    title: "YOLOv5 Object Detection",
-    description: "State-of-the-art object detection model with real-time performance and high accuracy.",
-    modelType: ["YOLOv5", "Real-time"],
-    category: "Object Detection"
-  },
-  "resnet50-classification": {
-    title: "ResNet50 Image Classification",
-    description: "Deep residual learning framework for image classification.",
-    modelType: ["ResNet50", "CNN"],
-    category: "Image Recognition"
-  },
-  "facenet-recognition": {
-    title: "FaceNet Recognition System",
-    description: "Advanced facial recognition model using deep convolutional networks.",
-    modelType: ["FaceNet", "Deep Learning"],
-    category: "Facial Recognition"
-  },
-  "maskrcnn-classmentation": {
-    title: "Mask R-CNN Segmentation",
-    description: "Instance segmentation model for object detection and segmentation masks.",
-    modelType: ["Mask R-CNN", "Instance Segmentation"],
-    category: "Object Detection"
-  },
-  "efficientnet-classification": {
-    title: "EfficientNet Classification",
-    description: "Scalable and efficient model for image classification.",
-    modelType: ["EfficientNet", "Mobile"],
-    category: "Image Recognition"
-  },
-  "detr-detection": {
-    title: "DETR Object Detection",
-    description: "End-to-End Object Detection with Transformers.",
-    modelType: ["DETR", "Transformer"],
-    category: "Object Detection"
-  },
-  "yolo11n": {
-    title: "YOLO11N Object Detection",
-    description: "",
-    modelType: ["YOLO11n"],
-    category: "Object Detection"
-  },
-  "yolo11s": {
-    title: "YOLO11S Object Detection",
-    description: "",
-    modelType: ["YOLO11ns"],
-    category: "Object Detection"
-  },
-  "yolo11m": {
-    title: "YOLO11m Object Detection",
-    description: "",
-    modelType: ["YOLO11m"],
-    category: "Object Detection"
-  },
-  "yolo11l": {
-    title: "YOLO11l Object Detection",
-    description: "",
-    modelType: ["YOLO11l"],
-    category: "Object Detection"
-  },
-  "yolo11x": {
-    title: "YOLO11x Object Detection",
-    description: "",
-    modelType: ["YOLO11x"],
-    category: "Object Detection"
-  },
-  "yolo11n-seg": {
-    title: "YOLO11N Object Segmentation",
-    description: "",
-    modelType: ["YOLO11n"],
-    category: "Object Segmentation"
-  },
-  "yolo11s-seg": {
-    title: "YOLO11S Object Segmentation",
-    description: "",
-    modelType: ["YOLO11ns"],
-    category: "Object Segmentation"
-  },
-  "yolo11m-seg": {
-    title: "YOLO11m Object Segmentation",
-    description: "",
-    modelType: ["YOLO11m"],
-    category: "Object Segmentation"
-  },
-  "yolo11l-seg": {
-    title: "YOLO11l Object Segmentation",
-    description: "",
-    modelType: ["YOLO11l"],
-    category: "Object Segmentation"
-  },
-  "yolo11x-seg": {
-    title: "YOLO11x Object Segmentation",
-    description: "",
-    modelType: ["YOLO11x"],
-    category: "Object Segmentation"
-  },
-  "yolo11n-class": {
-    title: "YOLO11N Object Classify",
-    description: "",
-    modelType: ["YOLO11n"],
-    category: "Object Classify"
-  },
-  "yolo11s-class": {
-    title: "YOLO11S Object Classify",
-    description: "",
-    modelType: ["YOLO11ns"],
-    category: "Object Classify"
-  },
-  "yolo11m-class": {
-    title: "YOLO11m Object Classify",
-    description: "",
-    modelType: ["YOLO11m"],
-    category: "Object Classify"
-  },
-  "yolo11l-class": {
-    title: "YOLO11l Object Classify",
-    description: "",
-    modelType: ["YOLO11l"],
-    category: "Object Classify"
-  },
-  "yolo11x-class": {
-    title: "YOLO11x Object Classify",
-    description: "",
-    modelType: ["YOLO11x"],
-    category: "Object Classify"
-  },
-  "yolo11n-obb": {
-    title: "OBB YOLO11N",
-    description: "",
-    modelType: ["YOLO11n-obb"],
-    category: "OBB Object Detection"
-  },
-  "yolo11s-obb": {
-    title: "OBB YYOLO11S",
-    description: "",
-    modelType: ["YOLO11s-obb"],
-    category: "OBB Object Detection"
-  },
-  "yolo11m-obb": {
-    title: "OBB YYOLO11m",
-    description: "",
-    modelType: ["YOLO11m-obb"],
-    category: "OBB Object Detection"
-  },
-  "yolo11l-obb": {
-    title: "OBB YYOLO11l",
-    description: "",
-    modelType: ["YOLO11l-obb"],
-    category: "OBB Object Detection"
-  },
-  "yolo11x-obb": {
-    title: "OBB YYOLO11x",
-    description: "",
-    modelType: ["YOLO11x-obb"],
-    category: "OBB Object Detection"
-  },
-};
-
-export default function TestModel({ params: paramsPromise }: { params: Promise<{ modelId: string }> }) {
-
+export default function TestModel({ params }: { params: Promise<{ modelId: string }> }) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<string | null>(null);
-  const params = React.use(paramsPromise);
-  const { modelId } = params;
+  const [model, setModel] = useState<any>(null);
+  
+  const imgRef = useRef<HTMLImageElement>(null);
+  const { modelId } = React.use(params)
 
-  const model = modelCards[modelId as keyof typeof modelCards];
+  useEffect(() => {
+    if (!modelId) return;
+
+    const fetchModelCard = async (modelId: string) => {
+      try {
+        const response = await fetch(`/api/models?modelId=${modelId}`);
+        const data = await response.json();
+      
+        if (response.ok) {
+          setModel(data.data[0]);
+        } else {
+          console.error(data.error);
+        }
+      } catch (error) {
+        console.error('Failed to fetch model cards:', error);
+      }
+    };
+
+    fetchModelCard(modelId);
+
+  }, []);
 
   if (!model) {
     return (
@@ -209,28 +73,24 @@ export default function TestModel({ params: paramsPromise }: { params: Promise<{
     setResult(null);
 
     try {
-      // Simulated API call
-      // await new Promise(resolve => setTimeout(resolve, 2000));
 
-      debugger;
-      await API.sendFile({data:selectedImage});
+      $.post({data:selectedImage}, (response: any)=>{
+        console.log(response);
+        if (imgRef.current) {
+          debugger;
+          processImageWithLuxandFaceFeatures(imgRef.current, response.data);
+        } else {
+          console.error("Canvas reference is null");
+        }
+      });
       
+      // let test = {x:334, y:215, w:234, padding:0, angle:4.992159, features:[[ 280, 220], [ 356, 216], [ 295, 269], [ 279, 292], [ 354, 296], [ 263, 314], [ 412, 318], [ 274, 334], [ 389, 339], [ 290, 351], [ 353, 355], [ 313, 360], [ 251, 201], [ 273, 201], [ 331, 195], [ 378, 197], [ 263, 196], [ 354, 190], [ 257, 198], [ 268, 199], [ 341, 190], [ 366, 193], [ 302, 216], [ 258, 222], [ 291, 223], [ 335, 221], [ 374, 216], [ 274, 227], [ 275, 215], [ 272, 220], [ 288, 222], [ 355, 222], [ 353, 211], [ 348, 218], [ 364, 216], [ 265, 218], [ 285, 218], [ 266, 225], [ 282, 226], [ 343, 215], [ 364, 212], [ 345, 222], [ 365, 219], [ 285, 257], [ 322, 253], [ 279, 267], [ 333, 261], [ 286, 270], [ 316, 270], [ 300, 280], [ 274, 277], [ 351, 274], [ 269, 289], [ 366, 290], [ 306, 289], [ 309, 314], [ 292, 289], [ 331, 290], [ 290, 308], [ 333, 310], [ 292, 293], [ 307, 294], [ 331, 294], [ 290, 303], [ 307, 307], [ 332, 304], [ 245, 243], [ 440, 237], [ 251, 283], [ 433, 282]]}
+
+
       
       // Simulated results based on model type
-      let simulatedResult = "";
-      switch (model.category) {
-        case "Object Detection":
-          simulatedResult = "Detected Objects:\n• Person (99%)\n• Car (95%)\n• Traffic Light (87%)";
-          break;
-        case "Image Recognition":
-          simulatedResult = "Classification Results:\n• Street Scene (98%)\n• Urban Environment (95%)\n• City (92%)";
-          break;
-        case "Facial Recognition":
-          simulatedResult = "Face Analysis:\n• Age: 25-35\n• Gender: Male\n• Expression: Neutral\n• Looking at Camera: Yes";
-          break;
-      }
+      // setResult(simulatedResult);
       
-      setResult(simulatedResult);
     } catch (error) {
       alert("Error processing image");
     } finally {
@@ -259,10 +119,10 @@ export default function TestModel({ params: paramsPromise }: { params: Promise<{
           <div className="bg-white rounded-lg shadow-lg p-8">
             <div className="mb-8">
               <h1 className="text-3xl font-bold mb-2">{model.title}</h1>
-              <p className="text-gray-600 mb-4">{model.description}</p>
+              <p className="text-gray-600 mb-4">{model.desc}</p>
               <div className="flex flex-wrap gap-2">
                 <Badge className="bg-indigo-600">{model.category}</Badge>
-                {model.modelType.map((type, index) => (
+                {model.tags.map((type :any, index :any) => (
                   <Badge key={index} variant="secondary">{type}</Badge>
                 ))}
               </div>
@@ -275,6 +135,7 @@ export default function TestModel({ params: paramsPromise }: { params: Promise<{
                     src={selectedImage}
                     alt="Preview"
                     className="object-contain w-full h-full"
+                    ref={imgRef} 
                   />
                   <Button
                     variant="secondary"
@@ -313,11 +174,14 @@ export default function TestModel({ params: paramsPromise }: { params: Promise<{
               >
                 {isProcessing ? "Processing..." : "Analyze Image"}
               </Button>
+              <canvas id="outputCanvas"></canvas>
 
               {result && (
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <h4 className="font-semibold mb-2">Results:</h4>
-                  <pre className="text-sm text-gray-700 whitespace-pre-line">{result}</pre>
+                <div>
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <h4 className="font-semibold mb-2">Results:</h4>
+                    <pre className="text-sm text-gray-700 whitespace-pre-line">{result}</pre>
+                  </div>
                 </div>
               )}
             </div>

@@ -3,44 +3,45 @@ import axios from 'axios';
 
 const $ = {
     // Make the POST request using the async/await syntax
-    sendFile: async function (data: any): Promise<void> {
-        try {
-            // Await the POST request and assign the response object to a variable
-            const response = await axios.post(
-                "http://192.168.140.160:8888/api/v1/face/normal", data, 
-            { headers: {
-                "Origin": "*",
-                "Content-Type": "application/json"
+    post: function (data: any, cb_ok: any = null,  cb_error:any = null){
+            axios.post(
+                "http://192.168.140.160:8888/api/v1/face/facialfeatures", data, 
+                { 
+                    headers: {
+                    "Origin": "*",
+                    "Content-Type": "application/json"
+                    }
                 }
+            ).then((response) => {
+                if( cb_ok )
+                    cb_ok(response);
+            }).catch((error) => {
+                if (cb_error)
+                    cb_error(error);
+                console.log(`Error message: ${error.message}`);
+                console.log(`Error code: ${error.code}`);
             });
-        
-            // Log the status code and the headers
-            console.log(`Status code: ${response.status}`);
-            console.log(`Headers: ${JSON.stringify(response.headers)}`);
-        
-            // Log the post information
-            console.log(`Post ID: ${response.data.id}`);
-            console.log(`Post Title: ${response.data.title}`);
-            console.log(`Post Body: ${response.data.body}`);
-            console.log(`Post User ID: ${response.data.userId}`);
-        } catch (error: any) {
-            // Log the error message and code
+    },
+    // Make the POST request using the async/await syntax
+    upload: function (data: any, file:any, cb_ok: any = null,  cb_error:any = null){
+        axios.post(
+            "http://192.168.140.160:8888/api/v1/face/normal", data,
+            { 
+                headers: {
+                "Origin": "*",
+                "Content-Type": "multi-part/data"
+                }
+            }
+        ).then((response) => {
+            if( cb_ok )
+                cb_ok(response);
+        }).catch((error) => {
+            if (cb_error)
+                cb_error(error);
             console.log(`Error message: ${error.message}`);
             console.log(`Error code: ${error.code}`);
-        
-            // Log the response status and data if available
-            if (error.response) {
-                console.log(`Response status: ${error.response.status}`);
-                console.log(`Response data: ${JSON.stringify(error.response.data)}`);
-            }
-        
-            // Log the request method and path if available
-            if (error.request) {
-                console.log(`Request method: ${error.request.method}`);
-            }
-        };
-    }
-  
+        });
+}
 }
 
 export default $;

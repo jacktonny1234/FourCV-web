@@ -101,7 +101,7 @@ export default function Introduce() {
                   <SelectItem value="all">All Type</SelectItem>
                   <SelectItem value="YOLO">YOLO</SelectItem>
                   <SelectItem value="Hugging Face">Hugging Face</SelectItem>
-                  <SelectItem value="Luxand">Luxand</SelectItem>
+                  <SelectItem value="Face">Face</SelectItem>
                 </SelectContent>
               </Select>
               <Select
@@ -113,9 +113,17 @@ export default function Introduce() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
-                  <SelectItem value="Image Recognition">Image Recognition</SelectItem>
+                  <SelectItem value="Object Segmentation">Object Segmentation</SelectItem>
                   <SelectItem value="Object Detection">Object Detection</SelectItem>
-                  <SelectItem value="Face Recognition">Face Recognition</SelectItem>
+                  <SelectItem value="Object Classify">Object Classify</SelectItem>
+                  <SelectItem value="Pose">Pose</SelectItem>
+                  <SelectItem value="OBB">OBB</SelectItem>
+                  <SelectItem value="Image Feature Extraction">Image Feature Extraction</SelectItem>
+                  <SelectItem value="Image to Text">Image to Text</SelectItem>
+                  <SelectItem value="Face Feature Detection">Face Feature Detection</SelectItem>
+                  <SelectItem value="Gender Recognition">Age Detection</SelectItem>
+                  <SelectItem value="Express Detection">Gender Detection</SelectItem>
+                  <SelectItem value="Express Detection">Express Detection</SelectItem>
                 </SelectContent>
               </Select>
             </div>

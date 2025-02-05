@@ -8,15 +8,18 @@ import { Badge } from "@/components/ui/badge";
 import $ from "@/lib/axios"
 import { useEffect, useRef } from "react";
 import * as React from 'react'
-import { processImageWithLuxandFaceFeatures } from "@/lib/opencv-utils"
+import { processImageWithLuxandFaceFeatures, processImageWithYOLO } from "@/lib/opencv-utils"
 
 export default function TestModel({ params }: { params: Promise<{ modelId: string }> }) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [model, setModel] = useState<any>(null);
+  const [canvasVisiblility, setCanvasVisiblity] = useState(false);
   
   const imgRef = useRef<HTMLImageElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
   const { modelId } = React.use(params)
 
   useEffect(() => {
@@ -38,7 +41,6 @@ export default function TestModel({ params }: { params: Promise<{ modelId: strin
     };
 
     fetchModelCard(modelId);
-
   }, []);
 
   if (!model) {
@@ -66,36 +68,97 @@ export default function TestModel({ params }: { params: Promise<{ modelId: strin
   };
 
 
-  const handleProcess = async () => {
-    if (!selectedImage) return;
+  const handleProcess = () => {
 
     setIsProcessing(true);
-    setResult(null);
 
-    try {
+    let i = new Image();
+    i.src = selectedImage;
+    i.onload = function(){
+      let img_ratio = i.width / i.height;
 
-      $.post({data:selectedImage}, (response: any)=>{
-        console.log(response);
-        if (imgRef.current) {
-          debugger;
-          processImageWithLuxandFaceFeatures(imgRef.current, response.data);
-        } else {
-          console.error("Canvas reference is null");
+      let size_ratio = 1;
+      if (imgRef.current) {
+        size_ratio = imgRef.current.height / i.height
+      }
+      setResult(null);
+  
+      try {
+        // let test: any = {'detections': [{'boxes': {'xyxy': [[10.8536376953125, 57.14820861816406, 317.79779052734375, 471.7489013671875], [338.3193359375, 24.6817626953125, 638.53759765625, 373.11419677734375], [40.029144287109375, 73.490234375, 175.7930908203125, 118.41522216796875], [5.7230224609375, 1.066986083984375, 636.361572265625, 476.1783752441406]], 'conf': [0.9053866863250732, 0.8976907730102539, 0.752298891544342, 0.4879526197910309], 'cls': [15.0, 15.0, 65.0, 57.0]}, 'masks': null, 'keypoints': null, 'probs': null, 'obb': null}], 'names': {0: 'person', 1: 'bicycle', 2: 'car', 3: 'motorcycle', 4: 'airplane', 5: 'bus', 6: 'train', 7: 'truck', 8: 'boat', 9: 'traffic light', 10: 'fire hydrant', 11: 'stop sign', 12: 'parking meter', 13: 'bench', 14: 'bird', 15: 'cat', 16: 'dog', 17: 'horse', 18: 'sheep', 19: 'cow', 20: 'elephant', 21: 'bear', 22: 'zebra', 23: 'giraffe', 24: 'backpack', 25: 'umbrella', 26: 'handbag', 27: 'tie', 28: 'suitcase', 29: 'frisbee', 30: 'skis', 31: 'snowboard', 32: 'sports ball', 33: 'kite', 34: 'baseball bat', 35: 'baseball glove', 36: 'skateboard', 37: 'surfboard', 38: 'tennis racket', 39: 'bottle', 40: 'wine glass', 41: 'cup', 42: 'fork', 43: 'knife', 44: 'spoon', 45: 'bowl', 46: 'banana', 47: 'apple', 48: 'sandwich', 49: 'orange', 50: 'broccoli', 51: 'carrot', 52: 'hot dog', 53: 'pizza', 54: 'donut', 55: 'cake', 56: 'chair', 57: 'couch', 58: 'potted plant', 59: 'bed', 60: 'dining table', 61: 'toilet', 62: 'tv', 63: 'laptop', 64: 'mouse', 65: 'remote', 66: 'keyboard', 67: 'cell phone', 68: 'microwave', 69: 'oven', 70: 'toaster', 71: 'sink', 72: 'refrigerator', 73: 'book', 74: 'clock', 75: 'vase', 76:           'scissors', 77: 'teddy bear', 78: 'hair drier', 79: 'toothbrush'}}
+        // if (imgRef.current) {
+        //   processImageWithYOLO("yolo11n.pt", imgRef.current, test, img_ratio, size_ratio);
+        //   setResult(JSON.stringify(test));
+        // }
+        if(model.key.indexOf("cls") < 0)
+          setCanvasVisiblity(true);
+
+        if( model.tags.indexOf("YOLO") > -1 ){
+          $.post("yolo/", 
+            {
+              model: model.key,
+              data: selectedImage,
+              param:{}
+            },
+           (response: any)=>{
+
+            if (imgRef.current) {
+              processImageWithYOLO(model.key, imgRef.current, response.data, img_ratio, size_ratio);
+              setResult(JSON.stringify(response.data));
+            }
+          setIsProcessing(false);
+          }, (e: any)=>{
+            setIsProcessing(false);
+            alert("Error processing image");
+          });
+        }else if( model.tags.indexOf("Face") > -1){
+          if(model.key == "facialfeatures")
+            setCanvasVisiblity(true);
+          $.post("face/" + model.key, 
+            {
+              data: selectedImage,
+            },
+           (response: any)=>{
+            if(model.key == "facialfeatures"){
+              setCanvasVisiblity(true);
+              if (imgRef.current) {
+                processImageWithLuxandFaceFeatures(imgRef.current, response.data, img_ratio, size_ratio);
+              } else {
+                console.error("Canvas reference is null");
+              }
+            }
+            setIsProcessing(false);
+            setResult(JSON.stringify(response.data));
+          }, (e: any)=>{
+            setIsProcessing(false);
+            alert("Error processing image");
+          });
+        }else{
+          $.post("hugging/" + model.key, 
+            {
+              data: selectedImage,
+            },
+           (response: any)=>{
+            if(model.key == "ImageSegmentation"){
+              setCanvasVisiblity(false);
+              let data = "data:image/png;base64," + response.data.data;
+              if (imgRef.current) {
+                setSelectedImage(data);
+              } else {
+                console.error("Canvas reference is null");
+              }
+            }
+            setIsProcessing(false);
+            setResult(JSON.stringify(response.data));
+          }, (e: any)=>{
+            setIsProcessing(false);
+            alert("Error processing image");
+          });
         }
-      });
-      
-      // let test = {x:334, y:215, w:234, padding:0, angle:4.992159, features:[[ 280, 220], [ 356, 216], [ 295, 269], [ 279, 292], [ 354, 296], [ 263, 314], [ 412, 318], [ 274, 334], [ 389, 339], [ 290, 351], [ 353, 355], [ 313, 360], [ 251, 201], [ 273, 201], [ 331, 195], [ 378, 197], [ 263, 196], [ 354, 190], [ 257, 198], [ 268, 199], [ 341, 190], [ 366, 193], [ 302, 216], [ 258, 222], [ 291, 223], [ 335, 221], [ 374, 216], [ 274, 227], [ 275, 215], [ 272, 220], [ 288, 222], [ 355, 222], [ 353, 211], [ 348, 218], [ 364, 216], [ 265, 218], [ 285, 218], [ 266, 225], [ 282, 226], [ 343, 215], [ 364, 212], [ 345, 222], [ 365, 219], [ 285, 257], [ 322, 253], [ 279, 267], [ 333, 261], [ 286, 270], [ 316, 270], [ 300, 280], [ 274, 277], [ 351, 274], [ 269, 289], [ 366, 290], [ 306, 289], [ 309, 314], [ 292, 289], [ 331, 290], [ 290, 308], [ 333, 310], [ 292, 293], [ 307, 294], [ 331, 294], [ 290, 303], [ 307, 307], [ 332, 304], [ 245, 243], [ 440, 237], [ 251, 283], [ 433, 282]]}
-
-
-      
-      // Simulated results based on model type
-      // setResult(simulatedResult);
-      
-    } catch (error) {
-      alert("Error processing image");
-    } finally {
-      setIsProcessing(false);
-    }
+      } catch (error) {
+        alert("Error processing image");
+      } finally {
+      }
+    };
   };
 
   return (
@@ -174,11 +237,14 @@ export default function TestModel({ params }: { params: Promise<{ modelId: strin
               >
                 {isProcessing ? "Processing..." : "Analyze Image"}
               </Button>
-              <canvas id="outputCanvas"></canvas>
-
+              { canvasVisiblility && 
+              <div ref={wrapRef} className="relative aspect-video rounded-lg overflow-hidden bg-gray-100 flex justify-center">
+                <canvas id="outputCanvas" ref={canvasRef}></canvas>
+                </div>
+              }
               {result && (
                 <div>
-                  <div className="p-4 bg-gray-50 rounded-lg">
+                  <div className="p-4 bg-gray-50 rounded-lg break-all">
                     <h4 className="font-semibold mb-2">Results:</h4>
                     <pre className="text-sm text-gray-700 whitespace-pre-line">{result}</pre>
                   </div>

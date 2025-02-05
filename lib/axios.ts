@@ -1,11 +1,17 @@
+"use client"
+
 // Import the axios library
 import axios from 'axios';
 
+// const API_SERVER_URL = process.env.API_SERVER_URL;
+const API_SERVER_URL = "http://192.168.140.160:8888/api/v1/";
+// const API_SERVER_URL = "http://192.168.153.128:8888/api/v1/";
+
 const $ = {
     // Make the POST request using the async/await syntax
-    post: function (data: any, cb_ok: any = null,  cb_error:any = null){
+    post: function (url: string, data: any, cb_ok: any = null,  cb_error:any = null){
             axios.post(
-                "http://192.168.140.160:8888/api/v1/face/facialfeatures", data, 
+                API_SERVER_URL + url, data, 
                 { 
                     headers: {
                     "Origin": "*",
@@ -23,9 +29,8 @@ const $ = {
             });
     },
     // Make the POST request using the async/await syntax
-    upload: function (data: any, file:any, cb_ok: any = null,  cb_error:any = null){
-        axios.post(
-            "http://192.168.140.160:8888/api/v1/face/normal", data,
+    upload: function (url: string, data: any, file:any, cb_ok: any = null,  cb_error:any = null){
+        axios.post(API_SERVER_URL + url, data,
             { 
                 headers: {
                 "Origin": "*",

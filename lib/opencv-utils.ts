@@ -47,7 +47,6 @@ export function processImageWithYOLODetection(imageElement: HTMLImageElement, yo
 
 export function processImageWithYOLOObb(imageElement: HTMLImageElement, yoloResult: any, video_ratio:number, size_ratio:number) {
     // Convert HTMLImageElement to OpenCV Mat
-    debugger;
     const src = cv.imread(imageElement);
     let dst = new cv.Mat();
     let dsize = new cv.Size(imageElement.height*video_ratio, imageElement.height);
@@ -218,5 +217,16 @@ export function processImageWithLuxandFaceFeatures(imageElement: HTMLImageElemen
 
     // Display the result
     cv.imshow('outputCanvas', dst);
+    dst.delete();
+}
+
+export function showImage(imageElement: HTMLImageElement, video_ratio:number, size_ratio:number) {
+    // Convert HTMLImageElement to OpenCV Mat
+    const src = cv.imread(imageElement);
+    let dst = new cv.Mat();
+    let dsize = new cv.Size(imageElement.height*video_ratio, imageElement.height);
+    cv.resize(src, dst, dsize, 0, 0, cv.INTER_AREA); 
+    cv.imshow('outputCanvas', dst);
+    src.delete();
     dst.delete();
 }

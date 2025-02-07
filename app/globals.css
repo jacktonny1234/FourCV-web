@@ -80,3 +80,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+
+.result-box {
+  max-height: 500px;
+  overflow: auto;
+}

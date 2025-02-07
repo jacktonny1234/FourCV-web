@@ -8,18 +8,21 @@ import { Badge } from "@/components/ui/badge";
 import $ from "@/lib/axios"
 import { useEffect, useRef } from "react";
 import * as React from 'react'
-import { processImageWithLuxandFaceFeatures, processImageWithYOLO } from "@/lib/opencv-utils"
+import { processImageWithLuxandFaceFeatures, processImageWithYOLO, showImage} from "@/lib/opencv-utils"
 
 export default function TestModel({ params }: { params: Promise<{ modelId: string }> }) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [videoSource, setVideoSource] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [model, setModel] = useState<any>(null);
   const [canvasVisiblility, setCanvasVisiblity] = useState(false);
-  
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+    
   const imgRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const { modelId } = React.use(params)
 
   useEffect(() => {
@@ -43,19 +46,19 @@ export default function TestModel({ params }: { params: Promise<{ modelId: strin
     fetchModelCard(modelId);
   }, []);
 
+
+  useEffect(()=>{
+    videoRef.current?.load();
+  },[videoSource])
+
   if (!model) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Model not found</h1>
-          <Button asChild>
-            <Link href="/introduce">Back to Models</Link>
-          </Button>
-        </div>
-      </div>
-    );
+    return (<div></div>)
   }
 
+  const handleVideoUpload =  (e: React.ChangeEvent<HTMLInputElement>) => {
+    setVideoFile(e.target.files?.[0] || null)
+  }
+  
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -73,7 +76,13 @@ export default function TestModel({ params }: { params: Promise<{ modelId: strin
     setIsProcessing(true);
 
     let i = new Image();
-    i.src = selectedImage;
+    if (selectedImage) {
+      i.src = selectedImage;
+    } else {
+      alert("No image selected");
+      setIsProcessing(false);
+      return;
+    }
     i.onload = function(){
       let img_ratio = i.width / i.height;
 
@@ -84,15 +93,10 @@ export default function TestModel({ params }: { params: Promise<{ modelId: strin
       setResult(null);
   
       try {
-        // let test: any = {'detections': [{'boxes': {'xyxy': [[10.8536376953125, 57.14820861816406, 317.79779052734375, 471.7489013671875], [338.3193359375, 24.6817626953125, 638.53759765625, 373.11419677734375], [40.029144287109375, 73.490234375, 175.7930908203125, 118.41522216796875], [5.7230224609375, 1.066986083984375, 636.361572265625, 476.1783752441406]], 'conf': [0.9053866863250732, 0.8976907730102539, 0.752298891544342, 0.4879526197910309], 'cls': [15.0, 15.0, 65.0, 57.0]}, 'masks': null, 'keypoints': null, 'probs': null, 'obb': null}], 'names': {0: 'person', 1: 'bicycle', 2: 'car', 3: 'motorcycle', 4: 'airplane', 5: 'bus', 6: 'train', 7: 'truck', 8: 'boat', 9: 'traffic light', 10: 'fire hydrant', 11: 'stop sign', 12: 'parking meter', 13: 'bench', 14: 'bird', 15: 'cat', 16: 'dog', 17: 'horse', 18: 'sheep', 19: 'cow', 20: 'elephant', 21: 'bear', 22: 'zebra', 23: 'giraffe', 24: 'backpack', 25: 'umbrella', 26: 'handbag', 27: 'tie', 28: 'suitcase', 29: 'frisbee', 30: 'skis', 31: 'snowboard', 32: 'sports ball', 33: 'kite', 34: 'baseball bat', 35: 'baseball glove', 36: 'skateboard', 37: 'surfboard', 38: 'tennis racket', 39: 'bottle', 40: 'wine glass', 41: 'cup', 42: 'fork', 43: 'knife', 44: 'spoon', 45: 'bowl', 46: 'banana', 47: 'apple', 48: 'sandwich', 49: 'orange', 50: 'broccoli', 51: 'carrot', 52: 'hot dog', 53: 'pizza', 54: 'donut', 55: 'cake', 56: 'chair', 57: 'couch', 58: 'potted plant', 59: 'bed', 60: 'dining table', 61: 'toilet', 62: 'tv', 63: 'laptop', 64: 'mouse', 65: 'remote', 66: 'keyboard', 67: 'cell phone', 68: 'microwave', 69: 'oven', 70: 'toaster', 71: 'sink', 72: 'refrigerator', 73: 'book', 74: 'clock', 75: 'vase', 76:           'scissors', 77: 'teddy bear', 78: 'hair drier', 79: 'toothbrush'}}
-        // if (imgRef.current) {
-        //   processImageWithYOLO("yolo11n.pt", imgRef.current, test, img_ratio, size_ratio);
-        //   setResult(JSON.stringify(test));
-        // }
-        if(model.key.indexOf("cls") < 0)
-          setCanvasVisiblity(true);
-
         if( model.tags.indexOf("YOLO") > -1 ){
+          if(model.key.indexOf("cls") < 0)
+            setCanvasVisiblity(true);
+
           $.post("yolo/", 
             {
               model: model.key,
@@ -103,7 +107,24 @@ export default function TestModel({ params }: { params: Promise<{ modelId: strin
 
             if (imgRef.current) {
               processImageWithYOLO(model.key, imgRef.current, response.data, img_ratio, size_ratio);
-              setResult(JSON.stringify(response.data));
+
+              if(model.key.indexOf("cls") > 0){
+                let data = response.data.detections[0].probs;
+                let name = response.data.names;
+                
+                let result: { top1: string; top5: string[] } = {
+                  top1: name[data.top1],
+                  top5: []
+                };
+
+                for(let id of data.top5){
+                  result.top5.push(name[id]);
+                }
+
+                setResult(JSON.stringify(result));
+              }else{
+                setResult(JSON.stringify(response.data));
+              }
             }
           setIsProcessing(false);
           }, (e: any)=>{
@@ -119,7 +140,6 @@ export default function TestModel({ params }: { params: Promise<{ modelId: strin
             },
            (response: any)=>{
             if(model.key == "facialfeatures"){
-              setCanvasVisiblity(true);
               if (imgRef.current) {
                 processImageWithLuxandFaceFeatures(imgRef.current, response.data, img_ratio, size_ratio);
               } else {
@@ -133,22 +153,27 @@ export default function TestModel({ params }: { params: Promise<{ modelId: strin
             alert("Error processing image");
           });
         }else{
+          if( model.key == "DepthEstimation" || model.key == "ImageSegmentation")
+            setCanvasVisiblity(true);
+
           $.post("hugging/" + model.key, 
             {
               data: selectedImage,
             },
            (response: any)=>{
-            if(model.key == "ImageSegmentation"){
-              setCanvasVisiblity(false);
-              let data = "data:image/png;base64," + response.data.data;
-              if (imgRef.current) {
-                setSelectedImage(data);
-              } else {
-                console.error("Canvas reference is null");
-              }
-            }
             setIsProcessing(false);
-            setResult(JSON.stringify(response.data));
+            if( model.key == "DepthEstimation" || model.key == "ImageSegmentation"){
+              let data = "data:image/png;base64," + response.data.data
+
+              let img = new Image();
+              img.onload = () => {
+                  showImage(img, img_ratio, size_ratio);
+              };
+              img.src = data;
+
+            }else{
+              setResult(JSON.stringify(response.data));
+            }
           }, (e: any)=>{
             setIsProcessing(false);
             alert("Error processing image");
@@ -160,6 +185,29 @@ export default function TestModel({ params }: { params: Promise<{ modelId: strin
       }
     };
   };
+  let i = true;
+
+  const handleVideoProcess = () => {
+    setIsProcessing(true);
+    
+    $.upload("upload/", 
+      videoFile,
+      (response: any)=>{
+        let file_path = response.data[1];
+        $.post("yolo/video", {
+          model: model.key,
+          param:{
+            filePath: file_path,
+          }
+        },
+            (response :any)=>{
+              setIsProcessing(false);
+              let url = response.data;
+              setVideoSource(url);
+            },
+          );
+      });
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -191,7 +239,7 @@ export default function TestModel({ params }: { params: Promise<{ modelId: strin
               </div>
             </div>
 
-            <div className="space-y-6">
+            {model.key.indexOf("video") < 0 && <div className="space-y-6">
               {selectedImage ? (
                 <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100">
                   <img
@@ -213,7 +261,7 @@ export default function TestModel({ params }: { params: Promise<{ modelId: strin
                 <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-8 bg-gray-50">
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="*"
                     onChange={handleImageUpload}
                     className="hidden"
                     id="image-upload"
@@ -225,7 +273,7 @@ export default function TestModel({ params }: { params: Promise<{ modelId: strin
                     <div className="text-gray-600 mb-2">
                       Click to upload an image
                     </div>
-                    <Button variant="secondary">Choose File</Button>
+                    {/* <Button variant="secondary">Choose File</Button> */}
                   </label>
                 </div>
               )}
@@ -243,14 +291,62 @@ export default function TestModel({ params }: { params: Promise<{ modelId: strin
                 </div>
               }
               {result && (
-                <div>
+                <div className="result-box">
                   <div className="p-4 bg-gray-50 rounded-lg break-all">
                     <h4 className="font-semibold mb-2">Results:</h4>
                     <pre className="text-sm text-gray-700 whitespace-pre-line">{result}</pre>
                   </div>
                 </div>
               )}
-            </div>
+              </div>
+            }
+
+            { model.key.indexOf("video") > -1 && 
+            <div className="space-y-6">
+              {videoFile ? 
+              <div className="relative flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-8 bg-gray-50">
+                <p>{videoFile.name}</p>
+                <Button
+                    variant="secondary"
+                    size="sm"
+                    className="absolute top-2 right-2"
+                    onClick={() => setVideoFile(null)}
+                  >
+                    Change Video
+                  </Button>
+              </div>
+              :
+            <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-8 bg-gray-50">
+            <input
+              type="file"
+              accept="*"
+              onChange={handleVideoUpload}
+              className="hidden"
+              id="image-upload"
+            />
+            <label
+              htmlFor="image-upload"
+              className="cursor-pointer text-center"
+            >
+              <div className="text-gray-600 mb-2">
+                Click to upload an Video
+              </div>
+              {/* <Button variant="secondary">Choose File</Button> */}
+            </label>
+          </div>
+          }
+              <Button
+                className="w-full"
+                disabled={isProcessing}
+                onClick={handleVideoProcess}
+              >
+                {isProcessing ? "Processing..." : "Analyze Video"}
+              </Button>
+              <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-8 bg-gray-50">
+                <video ref={videoRef} src={videoSource} controls className="w100"/>
+              </div>
+              </div>
+            }
           </div>
         </div>
       </main>

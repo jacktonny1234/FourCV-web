@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -8,9 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { NavBar } from "@/components/layout/nav-bar";
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
 interface ModelCard {
   id: number;
@@ -21,6 +18,48 @@ interface ModelCard {
   category: string;
 }
 
+let type2class: { [key in 'all' | 'YOLO' | 'Hugging Face' | 'Face']: string[] } = {
+    "all":[
+    "All",
+    "Object Detection",
+    "Object Segmentation",
+    "Object Classify",
+    "Pose",
+    "OBB",
+    "Image Feature Extraction",
+    "Image to Text",
+    "Face Feature Detection",
+    "Age Detection",
+    "Gender Detection",
+    "Express Detection",
+  ],
+  "YOLO":[
+    "All",
+    "Object Detection",
+    "Object Segmentation",
+    "Object Classify",
+    "Pose",
+    "OBB",
+  ],
+  "Hugging Face":[
+    "All",
+    "Object Detection",
+    "Object Segmentation",
+    "Object Classify",
+    "Image Feature Extraction",
+    "Image to Text",
+    "Pose",
+  ],
+  "Face":[
+    "All",
+    "Face Feature Detection",
+    "Age Detection",
+    "Gender Detection",
+    "Express Detection",
+  ]
+}
+
+
 export default function Introduce() {
   const [modelCards, setModelCards] = useState<ModelCard[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -28,27 +67,57 @@ export default function Introduce() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [formRequest, setFormRequest] = useState(false);
+  const [categoryList, setCategoryList] = useState<string[]>(type2class["all"]);
   const router = useRouter();
+  
+
+  const handleQuery = (value:string, type: string) => {
+    setFormRequest(true);
+    switch(type){
+      case "query": setSearchQuery(value); break;
+      case "tagsFilter": setTagsFilter(value); break;
+      case "categoryFilter": setCategoryFilter(value); break;
+      // case "currentPage": setCurrentPage(value); break;
+    }
+  }
 
   useEffect(() => {
+    var noFetch = false;
+
     const fetchModelCards = async () => {
       try {
-      const response = await fetch(`/api/models?searchQuery=${searchQuery}&tagsFilter=${tagsFilter}&categoryFilter=${categoryFilter}&currentPage=${currentPage}`);
-      const data = await response.json();
+          const response = await fetch(`/api/models?searchQuery=${searchQuery}&tagsFilter=${tagsFilter}&categoryFilter=${categoryFilter}&currentPage=${currentPage}&formRequest=${formRequest}`);
+          const data = await response.json();
 
-      if (response.ok) {
-        setModelCards(data.data);
-        setTotalPages(data.totalPages);
-      } else {
-        console.error(data.error);
-      }
+          if (response.ok) {
+            setModelCards(data.data);
+            setTotalPages(data.totalPages);
+            if (data.query){
+              noFetch = true;
+              let query = data.query;
+              setSearchQuery(query.searchQuery);
+              setTagsFilter(query.tagsFilter);
+              setCategoryFilter(query.categoryFilter);
+              setCurrentPage(query.currentPage);
+            }
+          } else {
+            console.error(data.error);
+          }
       } catch (error) {
-      console.error('Failed to fetch model cards:', error);
+        console.error('Failed to fetch model cards:', error);
       }
     };
+    setCategoryList(type2class[tagsFilter as 'all' | 'YOLO' | 'Hugging Face' | 'Face']);
 
-    fetchModelCards();
-  }, [searchQuery, tagsFilter, categoryFilter, currentPage]);
+    if(!noFetch){
+      fetchModelCards();
+    }
+
+    return ()=>{ noFetch = true }
+
+  }, [searchQuery, tagsFilter, categoryFilter, currentPage]
+);
 
   const handleModelClick = (modelId: number) => {
     router.push(`/test/${modelId}`);
@@ -86,13 +155,13 @@ export default function Introduce() {
                   type="text"
                   placeholder="Search models..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => handleQuery(e.target.value, "query") }
                   className="pl-10 w-full"
                 />
               </div>
               <Select
                 value={tagsFilter}
-                onValueChange={setTagsFilter}
+                onValueChange={(value) => handleQuery(value, "tagsFilter") }
               >
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="All Type" />
@@ -106,24 +175,15 @@ export default function Introduce() {
               </Select>
               <Select
                 value={categoryFilter}
-                onValueChange={setCategoryFilter}
+                onValueChange={(value) => handleQuery(value, "categoryFilter") }
               >
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  <SelectItem value="Object Segmentation">Object Segmentation</SelectItem>
-                  <SelectItem value="Object Detection">Object Detection</SelectItem>
-                  <SelectItem value="Object Classify">Object Classify</SelectItem>
-                  <SelectItem value="Pose">Pose</SelectItem>
-                  <SelectItem value="OBB">OBB</SelectItem>
-                  <SelectItem value="Image Feature Extraction">Image Feature Extraction</SelectItem>
-                  <SelectItem value="Image to Text">Image to Text</SelectItem>
-                  <SelectItem value="Face Feature Detection">Face Feature Detection</SelectItem>
-                  <SelectItem value="Gender Recognition">Age Detection</SelectItem>
-                  <SelectItem value="Express Detection">Gender Detection</SelectItem>
-                  <SelectItem value="Express Detection">Express Detection</SelectItem>
+                  {categoryList.map((item: string) => (
+                    <SelectItem key={item == "All" ? "all" : item} value={item == "All" ? "all" : item}>{item}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

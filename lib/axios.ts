@@ -14,7 +14,6 @@ const $ = {
                 API_SERVER_URL + url, data, 
                 { 
                     headers: {
-                    "Origin": "*",
                     "Content-Type": "application/json"
                     }
                 }
@@ -29,12 +28,14 @@ const $ = {
             });
     },
     // Make the POST request using the async/await syntax
-    upload: function (url: string, data: any, file:any, cb_ok: any = null,  cb_error:any = null){
-        axios.post(API_SERVER_URL + url, data,
+    upload: function (url: string, file:any, cb_ok: any = null,  cb_error:any = null){
+        const formData = new FormData();
+        formData.append('data', file);
+   
+        axios.post(API_SERVER_URL + url, formData,
             { 
                 headers: {
-                "Origin": "*",
-                "Content-Type": "multi-part/data"
+                "Content-Type": "multi-part/form-data"
                 }
             }
         ).then((response) => {

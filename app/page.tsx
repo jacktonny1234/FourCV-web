@@ -20,17 +20,19 @@ export default function Home() {
             <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
               At FourCV, we are dedicated to pioneering advancements in computer vision technology, transforming industries and enhancing the way we interact with the world through innovative solutions.
             </p>
-            <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700">
-              Contact Us
+            <Button  className="bg-indigo-600 hover:bg-indigo-700">
+              <Link href={"/report"}>
+                Contact Us
+              </Link>
             </Button>
           </div>
         </div>
       </section>
 
       {/* Services Section */}
-      <section className="py-16">
+      <section className="py-16 bg-cover bg-center" style={{ backgroundImage: "url('/path/to/your/image.jpg')" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center mb-4">Comprehensive CV Services</h2>
+          <h2 className="text-3xl font-bold tbext-center mb-4">Comprehensive CV Services</h2>
           <p className="text-gray-600 text-center mb-12">Empowering businesses with state-of-the-art computer vision solutions.</p>
           
           <div className="grid md:grid-cols-3 gap-8">
@@ -82,9 +84,6 @@ export default function Home() {
               />
               <h3 className="text-xl font-semibold mb-2">Proven Track Record</h3>
               <p className="text-gray-600 mb-4">Years of experience delivering successful projects across diverse sectors.</p>
-              <Button variant="outline" className="w-full">
-                Read More <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
             </div>
 
             <div className="bg-white p-6 rounded-lg shadow-md">
@@ -95,9 +94,6 @@ export default function Home() {
               />
               <h3 className="text-xl font-semibold mb-2">Cutting-Edge Technology</h3>
               <p className="text-gray-600 mb-4">Leveraging the latest advancements for maximum efficiency and productivity.</p>
-              <Button variant="outline" className="w-full">
-                Read More <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
             </div>
 
             <div className="bg-white p-6 rounded-lg shadow-md">
@@ -108,9 +104,6 @@ export default function Home() {
               />
               <h3 className="text-xl font-semibold mb-2">Client-Centric Approach</h3>
               <p className="text-gray-600 mb-4">Prioritizing client needs and objectives through collaborative solutions.</p>
-              <Button variant="outline" className="w-full">
-                Read More <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
             </div>
           </div>
         </div>

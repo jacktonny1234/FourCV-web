@@ -1,10 +1,27 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
+import { cookies } from 'next/headers';
+import { deleteCookie, getCookie, setCookie, hasCookie, getCookies } from 'cookies-next/server';
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { searchQuery = "", tagsFilter = "all", categoryFilter = "all", currentPage = 1, modelId = -1 } = req.query
+  
+  var { searchQuery = "", tagsFilter = "all", categoryFilter = "all", currentPage = 1, modelId = -1, formRequest = 'false' } = req.query
+  var isQuery = false;
+
+  if( formRequest == 'false'){
+    let param = await getCookie('query', { res, req });
+    if(param != undefined){
+      let param_obj = JSON.parse(param);
+      ({ searchQuery, tagsFilter, categoryFilter, currentPage } = param_obj);
+      req.query = param_obj;
+      isQuery = true;
+    }
+  }else{
+    await setCookie('query', req.query, { res, req });
+  }
+
   let query = supabase
     .from('model_cards')
     .select('*', { count: 'exact' });
@@ -31,5 +48,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: error.message });
   }
 
-  res.status(200).json({ data, totalPages: Math.ceil((count ?? 0) / 30) });
+  if(isQuery){
+    res.status(200).json({ data, totalPages: Math.ceil((count ?? 0) / 30), query: req.query});
+  }else{
+    res.status(200).json({ data, totalPages: Math.ceil((count ?? 0) / 30)});
+  }
 }
